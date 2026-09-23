@@ -133,50 +133,51 @@ CREATE TABLE fact_sales (
 ANSWER
 -- 1. Total revenue by branch city
 SELECT 
-	b.branch_city,
-	ROUND(SUM(fs.quantity * p.price), 2) AS total revenue
+    b.branch_city,
+    ROUND(SUM(fs.quantity * p.price), 2) AS total_revenue
 FROM fact_sales AS fs 
-JOIN dim_branch
-ON b.branch_id = fs.branch_id
-JOIN dim_product
-ON p.product_id = fs.product_id
-GROUP BY b.branch_id, b.branch_id
-ORDER BY total revenue DESC;
+JOIN dim_branch AS b ON b.branch_id = fs.branch_id
+JOIN dim_product AS p ON p.product_id = fs.product_id
+GROUP BY b.branch_city
+ORDER BY total_revenue DESC;
+
 
 -- 2 Top 5 customers who spends the most
 SELECT 
-	c.customer_id,
-	c.customer_name,
-	ROUND(SUM(fs.quantity * p.price), 2) AS total_spent
+    c.customer_id,
+    c.customer_name,
+    ROUND(SUM(fs.quantity * p.price), 2) AS total_spent
 FROM fact_sales AS fs
 JOIN dim_customer AS c ON c.customer_id = fs.customer_id
 JOIN dim_product AS p ON p.product_id = fs.product_id
-GROUP BY c.customer_id, customer_name
+GROUP BY c.customer_id, c.customer_name
 ORDER BY total_spent DESC
 LIMIT 5;
 
 -- 3. Total quantity sold by product line
 SELECT
-	p.product_line,
-	SUM(fs.quantity) AS total_qunatity_sold
+    p.product_line,
+    SUM(fs.quantity) AS total_quantity_sold
 FROM fact_sales AS fs
 JOIN dim_product AS p ON p.product_id = fs.product_id
 GROUP BY p.product_line
-ORDER BY total_qunatity_sold DESC;
+ORDER BY total_quantity_sold DESC;
 
 -- 4 show the distribution of payment type used
 SELECT
-	pay.payment_type,
-	COUNT(*) AS transaction_count,
-	ROUND(COUNT(*)) = 100.0 / (SELECT COUNT(*) FROM fact_sales), 2) AS percentage
+    pay.payment_type,
+    COUNT(*) AS transaction_count,
+    ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM fact_sales), 2) AS percentage
 FROM fact_sales AS fs
-JOIN dim_payment_id, pay.payment_type
+JOIN dim_payment AS pay ON pay.payment_id = fs.payment
+GROUP BY pay.payment_type
 ORDER BY transaction_count DESC;
+
 
 -- 5 Average rating per product line
 SELECT 
-	p.product_line,
-	ROUND(AVG(fs.rating) 2) AS average_rating
+    p.product_line,
+    ROUND(AVG(fs.rating), 2) AS average_rating
 FROM fact_sales AS fs
 JOIN dim_product AS p ON p.product_id = fs.product_id
 GROUP BY p.product_line
